@@ -6,3 +6,5 @@ __pycache__/
 scripts/demo_broken.py
 scripts/demo_correct.py
 demo_website/*
+bookmyshow_broken.py
+bookmyshow_correct.py
