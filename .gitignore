@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.png
+scripts/bookmyshow_correct.py
+scripts/bookmyshow_broken.py
