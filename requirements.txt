@@ -1,0 +1,11 @@
+# Playwright for browser automation
+playwright>=1.40.0
+
+# Fuzzy string matching
+rapidfuzz>=3.6.0
+
+# Google Generative AI (Gemini) for AI-based matching
+google-generativeai>=0.3.0
+
+# Rich console output
+rich>=13.0.0
