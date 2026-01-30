@@ -5,6 +5,5 @@ __pycache__/
 *.png
 scripts/demo_broken.py
 scripts/demo_correct.py
-demo_website/*
-bookmyshow_broken.py
-bookmyshow_correct.py
+scripts/bookmyshow_broken.py
+scripts/bookmyshow_correct.py
