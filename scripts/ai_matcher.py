@@ -62,7 +62,7 @@ def setup_gemini(api_key: Optional[str] = None) -> bool:
 def ai_find_element(
     intent: str, 
     elements: List[Dict[str, Any]],
-    model_name: str = "gemini-1.5-flash"
+    model_name: str = "gemini-2.5-flash"
 ) -> Dict[str, Any]:
     """
     Use Gemini AI to find the element that best matches the user's intent.

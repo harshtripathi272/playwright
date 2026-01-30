@@ -28,6 +28,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+# Import matchers
+from scripts.ai_matcher import setup_gemini, ai_find_element, fallback_fuzzy_match
+
 console = Console()
 
 
@@ -187,23 +190,33 @@ def extract_buttons_and_links(page):
     return unique_elements
 
 
-def run_stealth_script(movie_name: str, city_name: str, headless: bool = False):
+def run_stealth_script(movie_name: str, city_name: str, find_text: str = None, api_key: str = None, headless: bool = False):
     """
     Run the stealth script with anti-detection techniques.
     """
     console.print(Panel.fit(
         f"[bold cyan]BookMyShow - STEALTH Mode[/bold cyan]\n"
         f"City: {city_name}\n"
-        f"Movie: {movie_name}\n\n"
+        f"Movie: {movie_name}\n"
+        f"Intent: {find_text or 'Just browsing'}\n\n"
         f"[dim]Anti-detection features enabled:[/dim]\n"
         f"  ✓ Playwright Stealth Plugin\n"
         f"  ✓ Human-like typing (with typos)\n"
         f"  ✓ Random mouse movements\n"
         f"  ✓ Realistic browser fingerprint\n"
         f"  ✓ Random delays\n"
-        f"  ✓ Smart Fuzzy Selection",
+        f"  ✓ Smart Fuzzy Selection\n"
+        f"  ✓ AI/Fuzzy Element Matching",
         title="🕵️ Stealth Mode Activated"
     ))
+    
+    # Setup Gemini if API key provided
+    use_ai = False
+    if api_key:
+        use_ai = setup_gemini(api_key)
+        if use_ai:
+             console.print("[green]🤖 AI Features Enabled (Gemini)[/green]")
+    
     
     with sync_playwright() as p:
         # Launch browser with anti-detection settings
@@ -378,25 +391,76 @@ def run_stealth_script(movie_name: str, city_name: str, headless: bool = False):
             page.screenshot(path="stealth_result.png")
             console.print("[dim]Screenshot saved: stealth_result.png[/dim]")
             
-            # Display results
-            console.print(f"\n[yellow]Step 5:[/yellow] Results:\n")
-            
-            table = Table(title="Page Elements Found", show_header=True)
-            table.add_column("Text", style="green", width=40)
-            table.add_column("Tag", style="cyan", width=10)
-            
-            for elem in elements[:20]:
-                table.add_row(elem["text"][:40], elem["tag"])
-            
-            console.print(table)
-            
-            # Highlight booking elements
-            console.print("\n[bold magenta]🎯 Booking-related elements:[/bold magenta]")
-            booking_keywords = ["book", "ticket", "buy", "get", "show", "seat"]
-            for elem in elements:
-                if any(kw in elem["text"].lower() for kw in booking_keywords):
-                    console.print(f"  ✅ \"{elem['text']}\"")
-            
+            # Step 5: Analyze and Click (if requested)
+            if find_text:
+                console.print(f"\n[yellow]Step 5:[/yellow] Analyzing intent: '{find_text}'...")
+                
+                match_result = {}
+                if use_ai:
+                    console.print("[cyan]Asking Gemini AI to find the best element...[/cyan]")
+                    match_result = ai_find_element(find_text, elements)
+                else:
+                    console.print("[cyan]Using Fuzzy Matching to find element...[/cyan]")
+                    match_result = fallback_fuzzy_match(find_text, elements)
+                
+                if match_result.get("matched_index", -1) >= 0:
+                    best_elem = match_result.get("element")
+                    console.print(Panel.fit(
+                        f"[bold green]✅ Target Identified![/bold green]\n\n"
+                        f"[yellow]Your Intent:[/yellow] \"{find_text}\"\n"
+                        f"[green]Matched Element:[/green] \"{best_elem.get('text')}\"\n"
+                        f"[cyan]Confidence:[/cyan] {match_result.get('confidence')}%\n"
+                        f"[magenta]Reasoning:[/magenta] {match_result.get('reasoning')}",
+                        title="🎯 Smart Match"
+                    ))
+                    
+                    # Try to interact with the found element
+                    selector = best_elem.get("selector")
+                    # We need to find the specific element handle again or use the selector
+                    # However, best_elem from fallback_fuzzy_match might not have the playwright locator handle attached
+                    # But extract_buttons_and_links returns dictionaries, not handles.
+                    # We need to re-locate it.
+                    
+                    target_locator = None
+                    if selector:
+                        # Try to find it by text and selector to be precise
+                        text_content = best_elem.get("text")
+                        try:
+                            # Try precise match first
+                            target_locator = page.locator(f"{selector}:has-text('{text_content}')").first
+                            if not target_locator.is_visible():
+                                 target_locator = page.locator(selector).filter(has_text=text_content).first
+                        except:
+                            target_locator = page.locator(selector).first
+                    
+                    if target_locator:
+                        console.print(f"\n[yellow]Step 6:[/yellow] interacting with target...")
+                        target_locator.scroll_into_view_if_needed()
+                        random_delay(500, 1000)
+                        
+                        try:
+                            target_locator.hover(timeout=2000)
+                            random_delay(200, 500)
+                            target_locator.click(force=True)
+                            console.print(f"[green]✓ Clicked on '{best_elem.get('text')}'[/green]")
+                        except Exception as e:
+                             console.print(f"[yellow]⚠ Click failed ({e}), trying to navigate via href...[/yellow]")
+                             # Reuse the failsafe logic
+                             try:
+                                 href = target_locator.get_attribute("href")
+                                 if href:
+                                     target_url = href if href.startswith("http") else "https://in.bookmyshow.com" + href
+                                     page.goto(target_url, wait_until="domcontentloaded")
+                                     console.print(f"[green]✓ Navigated directly to {target_url}[/green]")
+                                 else:
+                                     console.print("[red]❌ No href found for fallback navigation[/red]")
+                             except:
+                                 console.print("[red]❌ Failed to retrieve href[/red]")
+                        
+                        random_delay(5000, 6000)
+                    else:
+                        console.print("[red]❌ Could not re-locate the element on page[/red]")
+
             return elements
             
         except Exception as e:
@@ -413,10 +477,12 @@ def main():
     parser = argparse.ArgumentParser(description="BookMyShow Stealth Script with Anti-Detection")
     parser.add_argument("--movie", type=str, default="Border 2", help="Movie name to search")
     parser.add_argument("--city", type=str, default="Mumbai", help="City to select")
+    parser.add_argument("--find", type=str, help="Intent/Element to find (e.g., 'book tickets')")
+    parser.add_argument("--api-key", type=str, help="Gemini API Key for AI matching")
     parser.add_argument("--headless", action="store_true", help="Run in headless mode")
     
     args = parser.parse_args()
-    run_stealth_script(args.movie, args.city, args.headless)
+    run_stealth_script(args.movie, args.city, args.find, args.api_key, args.headless)
 
 
 if __name__ == "__main__":
