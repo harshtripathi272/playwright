@@ -5,4 +5,4 @@ __pycache__/
 *.png
 scripts/demo_broken.py
 scripts/demo_correct.py
-demo_website/
+demo_website/*
