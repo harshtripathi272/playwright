@@ -18,7 +18,7 @@ import sys
 import random
 import time
 from pathlib import Path
-
+import os
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from playwright.sync_api import sync_playwright
@@ -27,7 +27,8 @@ from rapidfuzz import fuzz
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-
+from dotenv import load_dotenv
+load_dotenv()
 # Import matchers
 from scripts.ai_matcher import setup_gemini, ai_find_element, fallback_fuzzy_match
 
@@ -211,8 +212,10 @@ def run_stealth_script(movie_name: str, city_name: str, find_text: str = None, a
     ))
     
     # Setup Gemini if API key provided
-    use_ai = False
+    use_ai = True
+    api_key = os.getenv("GOOGLE_API_KEY")
     if api_key:
+
         use_ai = setup_gemini(api_key)
         if use_ai:
              console.print("[green]🤖 AI Features Enabled (Gemini)[/green]")

@@ -9,3 +9,4 @@ google-generativeai>=0.3.0
 
 # Rich console output
 rich>=13.0.0
+dotenv
