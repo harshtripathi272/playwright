@@ -3,5 +3,5 @@ __pycache__/
 *.pyc
 .env
 *.png
-scripts/bookmyshow_correct.py
-scripts/bookmyshow_broken.py
+scripts/demo_broken.py
+scripts/demo_correct.py
