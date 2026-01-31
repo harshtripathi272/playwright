@@ -200,7 +200,7 @@ def display_ai_result(intent: str, result: Dict[str, Any]):
         conf_color = "green" if confidence >= 80 else "yellow" if confidence >= 50 else "red"
         
         console.print(Panel.fit(
-            f"[bold green]✅ Element Found![/bold green]\n\n"
+            f"[bold green] Element Found![/bold green]\n\n"
             f"[yellow]Matched Element:[/yellow] \"{result.get('element_text', 'N/A')}\"\n"
             f"[{conf_color}]Confidence:[/{conf_color}] {confidence}%\n"
             f"[cyan]AI Reasoning:[/cyan] {result.get('reasoning', 'N/A')}\n"
@@ -209,7 +209,7 @@ def display_ai_result(intent: str, result: Dict[str, Any]):
         ))
     else:
         console.print(Panel.fit(
-            f"[bold red]❌ No Match Found[/bold red]\n\n"
+            f"[bold red] No Match Found[/bold red]\n\n"
             f"[cyan]AI Reasoning:[/cyan] {result.get('reasoning', 'No suitable element found')}",
             title="AI Result"
         ))
