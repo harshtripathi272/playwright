@@ -1,0 +1,188 @@
+{
+  "task_id": "22802ebf",
+  "total_attempts": 3,
+  "final_success": false,
+  "attempts": [
+    {
+      "attempt_number": 1,
+      "script_code": "import asyncio\nimport os\nfrom playwright.async_api import async_playwright, Playwright, Browser, Page\n\nasync def automate_bookmyshow():\n    browser: Browser = None\n    page: Page = None\n    try:\n        # Ensure screenshots directory exists\n        screenshots_dir = \"screenshots\"\n        if not os.path.exists(screenshots_dir):\n            os.makedirs(screenshots_dir)\n\n        async with async_playwright() as playwright:\n            browser = await playwright.chromium.launch(headless=True) # Set headless=False for visual debugging\n            page = await browser.new_new_page()\n\n            # Step 1: Navigate to BookMyShow homepage\n            print(\"Step 1: Navigating to BookMyShow homepage...\")\n            await page.goto(\"https://in.bookmyshow.com/\")\n            await page.wait_for_load_state('networkidle')\n            await page.screenshot(path=os.path.join(screenshots_dir, \"01_homepage_loaded.png\"))\n            print(\"Successfully navigated to BookMyShow homepage.\")\n\n            # Step 2: Handle city selection and ensure Mumbai is selected\n            print(\"Step 2: Handling city selection (trying to select Mumbai if prompted)...\")\n            city_modal_selector = \"div.bms-modal-block\" # Common selector for the city selection modal\n            mumbai_city_option_selector = \"div.bms-modal-block >> text='Mumbai'\" # Specific text within the modal\n\n            try:\n                # Wait for the city selection modal to appear (with a timeout)\n                await page.wait_for_selector(city_modal_selector, timeout=5000)\n                print(\"City selection modal detected. Clicking on 'Mumbai'.\")\n                await page.click(mumbai_city_option_selector)\n                await page.wait_for_load_state('networkidle')\n                print(\"Clicked 'Mumbai'.\")\n                await page.screenshot(path=os.path.join(screenshots_dir, \"02_after_city_selection.png\"))\n            except Exception:\n                print(\"City selection modal not found or already dismissed. Assuming Mumbai is active or will be handled later.\")\n                # Verify if Mumbai is already displayed in the header, or proceed\n                mumbai_header_selector = \"span.profile-city-name:has-text('Mumbai')\"\n                try:\n                    await page.wait_for_selector(mumbai_header_selector, timeout=3000)\n                    print(\"Mumbai is already selected in the header.\")\n                except Exception:\n                    print(\"Mumbai not explicitly found in header, proceeding with caution.\")\n                await page.screenshot(path=os.path.join(screenshots_dir, \"02_city_selection_confirmed.png\"))\n            \n            # Step 3: Click on the search icon and type \"Border 2\"\n            print(\"Step 3: Clicking search icon and typing 'Border 2'...\")\n            search_icon_selector = \"span.icon-search\" # Common selector for the search icon\n            search_input_selector = \"input#superstar-search-box\" # Common selector for the search input field\n\n            await page.wait_for_selector(search_icon_selector)\n            await page.click(search_icon_selector)\n            print(\"Clicked on the search icon.\")\n            \n            await page.wait_for_selector(search_input_selector)\n            await page.fill(search_input_selector, \"Border 2\")\n            print(\"Typed 'Border 2' into the search bar.\")\n            \n            await page.keyboard.press(\"Enter\") # Press Enter to submit the search\n            await page.wait_for_load_state('networkidle')\n            await page.screenshot(path=os.path.join(screenshots_dir, \"03_after_search_query.png\"))\n            print(\"Search query submitted for 'Border 2'.\")\n\n            # Step 4: Click on the \"Border 2\" movie result from search suggestions/results\n            print(\"Step 4: Clicking on 'Border 2' movie result...\")\n            # Selector looks for a link that contains '/movies/' in its href and 'Border 2' in its text\n            movie_result_link_selector = \"a[href*='/movies/']:has-text('Border 2')\"\n            \n            await page.wait_for_selector(movie_result_link_selector)\n            await page.click(movie_result_link_selector)\n            await page.wait_for_load_state('networkidle')\n            await page.screenshot(path=os.path.join(screenshots_dir, \"04_movie_details_page.png\"))\n            print(\"Navigated to 'Border 2' movie details page.\")\n\n            # Step 5: Verify show availability and take a screenshot of the show times section\n            print(\"Step 5: Checking for show availability and taking a screenshot.\")\n            # This selector looks for either a dedicated showtimes section or a prominent 'Book Tickets' button\n            show_availability_indicator_selector = \"section.showtimes-section, button.book-button-full-width\" \n            \n            await page.wait_for_selector(show_availability_indicator_selector, timeout=15000)\n            print(\"Show availability indicator (showtimes section or 'Book Tickets' button) found.\")\n            await page.locator(show_availability_indicator_selector).scroll_into_view_if_needed()\n            await page.screenshot(path=os.path.join(screenshots_dir, \"05_showtimes_or_book_tickets.png\"))\n            print(\"Screenshot taken of the showtimes/booking section.\")\n            print(\"Script completed successfully.\")\n\n    except Exception as e:\n        print(f\"An error occurred during automation: {e}\")\n        if page:\n            await page.screenshot(path=os.path.join(screenshots_dir, \"error_screenshot.png\"))\n        raise # Re-raise the exception after logging and screenshot\n\n    finally:\n        if browser:\n            await browser.close()\n            print(\"Browser closed.\")\n\nasync def main():\n    await automate_bookmyshow()\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+      "steps": [
+        {
+          "step_number": 1,
+          "description": "Navigate to the BookMyShow homepage.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 2,
+          "description": "Handle city selection: if a city selection modal appears, click on 'Mumbai'; otherwise, proceed assuming Mumbai is already selected or handled.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 3,
+          "description": "Locate and click the search icon to activate the search bar.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 4,
+          "description": "Type 'Border 2' into the search input field and press Enter to submit the query.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 5,
+          "description": "Wait for search results to appear and click on the 'Border 2' movie link to navigate to its details page.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 6,
+          "description": "Verify that the showtimes or 'Book Tickets' section is visible on the movie details page, indicating available shows.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        }
+      ],
+      "current_url": "unknown",
+      "page_title": "unknown",
+      "console_logs": [],
+      "network_errors": [],
+      "final_screenshot": null,
+      "error_message": "Script execution failed",
+      "success": false,
+      "start_time": "2026-02-01T03:17:37.103090",
+      "end_time": "2026-02-01T03:18:08.546994"
+    },
+    {
+      "attempt_number": 2,
+      "script_code": "import asyncio\nimport os\nfrom playwright.async_api import async_playwright, Page, expect\n\nasync def main():\n    browser = None\n    try:\n        async with async_playwright() as p:\n            browser = await p.chromium.launch(headless=True) # Set to False for visual debugging\n            page = await browser.new_page()\n\n            # Step 1: Navigate to BookMyShow\n            print(\"Step 1: Navigating to BookMyShow...\")\n            await page.goto(\"https://in.bookmyshow.com/\", timeout=60000) # Increased timeout for initial load\n            await page.screenshot(path=\"screenshots/01_bookmyshow_homepage.png\")\n            print(\"Screenshot taken: 01_bookmyshow_homepage.png\")\n\n            # Step 2: Handle city selection - try to select Mumbai\n            print(\"Step 2: Attempting to select Mumbai city...\")\n            mumbai_selected = False\n            try:\n                # Common selectors for city selection pop-up / banner\n                # Attempt to click on 'Mumbai' if it appears in a city selection modal or banner\n                # This combines several common locator patterns for Mumbai across different BMS layouts.\n                mumbai_locator_xpath = (\n                    \"//div[contains(@class, 'commonModal__container')]//div[contains(text(), 'Mumbai')] | \"\n                    \"//div[contains(@class, 'city-item')]//span[contains(text(), 'Mumbai')] | \"\n                    \"//a[contains(@class, 'select-city') and text()='Mumbai'] | \"\n                    \"//li[contains(@class, 'city-name')]/span[text()='Mumbai'] | \"\n                    \"//div[contains(@class, 'region-filter')]//span[text()='Mumbai']\"\n                )\n                mumbai_element = page.locator(mumbai_locator_xpath).first\n\n                await mumbai_element.wait_for(state=\"visible\", timeout=10000) # Wait for the element to be visible\n                await mumbai_element.click(timeout=5000)\n                print(\"Clicked on 'Mumbai' for city selection.\")\n                mumbai_selected = True\n                await page.wait_for_load_state('networkidle', timeout=15000)\n\n            except Exception as e:\n                print(f\"Mumbai city selection element not found in expected pop-up/banner. Trying dropdown or assuming already selected/no prompt. Error: {e}\")\n\n            if not mumbai_selected:\n                # Fallback: Check if city dropdown at top needs to be clicked and then Mumbai\n                try:\n                    # Locate the current city displayed at the top\n                    city_dropdown_locator = page.locator(\"//div[contains(@class, 'styles__CityWrapper')]/span | //span[contains(@class, 'user-chosen-city')] | //div[contains(@class, 'location-icon')]/following-sibling::span | //span[contains(@class, 'sc-jtykGq')]\")\n                    await city_dropdown_locator.wait_for(state=\"visible\", timeout=5000)\n                    current_city_text = await city_dropdown_locator.inner_text()\n\n                    if \"Mumbai\" not in current_city_text:\n                        print(f\"Current city is '{current_city_text}'. Attempting to change to Mumbai via dropdown.\")\n                        await city_dropdown_locator.click()\n                        # Wait for the dropdown options to appear and click Mumbai\n                        mumbai_in_dropdown = page.locator(\"li.city-name span\", has_text=\"Mumbai\").first\n                        await mumbai_in_dropdown.wait_for(state=\"visible\", timeout=5000)\n                        await mumbai_in_dropdown.click()\n                        print(\"Clicked Mumbai from top dropdown.\")\n                        mumbai_selected = True\n                        await page.wait_for_load_state('networkidle', timeout=15000)\n                    else:\n                        print(f\"City already set to '{current_city_text}'. Proceeding.\")\n                        mumbai_selected = True # Already in Mumbai\n                except Exception as e:\n                    print(f\"City dropdown not found or Mumbai not selectable from it. Assuming current city is fine or continuing. Error: {e}\")\n\n            if not mumbai_selected:\n                print(\"Could not confirm Mumbai selection. Script will proceed, but city might be incorrect.\")\n\n            await page.screenshot(path=\"screenshots/02_city_selected.png\")\n            print(\"Screenshot taken: 02_city_selected.png\")\n\n            # Step 3: Search for \"Border 2\"\n            print(\"Step 3: Searching for movie 'Border 2'...\")\n            # Locate the search icon or search bar. Combines different common selectors.\n            search_icon_selector = \"//div[contains(@class, 'Header__SearchInputContainer')] | //div[contains(@class, 'sc-bBHHxW')]/div[contains(@class, 'sc-fubCfw')] | //div[contains(@class, 'search-container')] | //span[contains(@class, 'search-icon')] | //div[contains(@class, 'sc-hORPGm')]\"\n            search_input_selector = \"[data-qa-id='search-input'] | [data-cy='search-bar'] | #search-bar-input | input[placeholder*='Search for Movies'] | input[placeholder*='Search for Movies, Events, Plays']\"\n\n            search_bar_element = None\n            try:\n                # Try to click a search icon/container first if it exists to reveal the input\n                search_icon = page.locator(search_icon_selector).first\n                await search_icon.wait_for(state=\"visible\", timeout=5000) # Wait for search icon/container to be visible\n                print(\"Clicking search icon/container...\")\n                await search_icon.click(timeout=5000)\n                # Now wait for the actual input field to appear after clicking the icon\n                search_bar_element = page.locator(search_input_selector).first\n                await search_bar_element.wait_for(state=\"visible\", timeout=5000) # Wait for the input to be visible\n            except Exception as e:\n                print(f\"Search icon/container not found or clickable, trying to locate search input directly. Error: {e}\")\n                search_bar_element = page.locator(search_input_selector).first\n                await search_bar_element.wait_for(state=\"visible\", timeout=5000) # Wait for the input directly\n\n            await search_bar_element.fill(\"Border 2\")\n            print(\"Typed 'Border 2' into search bar.\")\n            await page.screenshot(path=\"screenshots/03_typed_movie_name.png\")\n            print(\"Screenshot taken: 03_typed_movie_name.png\")\n\n            # Step 4: Click on the movie \"Border 2\" from search results\n            print(\"Step 4: Clicking on 'Border 2' from search results...\")\n            # Selector for the movie result link, looking for a link containing /movie/ and the exact text 'Border 2'\n            movie_result_selector = \"//a[contains(@href, '/movie/') and (text()='Border 2' or contains(@title, 'Border 2'))]\"\n            movie_result = page.locator(movie_result_selector).first\n            await movie_result.wait_for(state=\"visible\", timeout=10000) # Wait for the specific movie result to appear\n            await movie_result.click(timeout=5000)\n            print(\"Clicked on 'Border 2' search result.\")\n            await page.wait_for_load_state('networkidle', timeout=15000)\n            await page.screenshot(path=\"screenshots/04_movie_details_page.png\")\n            print(\"Screenshot taken: 04_movie_details_page.png\")\n\n            # Step 5: Check for show availability\n            print(\"Step 5: Checking for show availability...\")\n            # Look for common elements indicating showtimes or booking options on the movie details page\n            showtime_indicators = [\n                \"//div[contains(@class, 'showtime-card')]\",\n                \"//button[contains(text(), 'Book Tickets')]\",\n                \"//div[contains(@class, 'show-details')]\",\n                \"//div[contains(@class, 'showtimes-day')]\",\n                \"//section[contains(@class, 'venue-details')]\",\n                \"//div[contains(@class, 'show-timings')]\",\n                \"//a[contains(@class, 'select-show') or contains(@class, 'show-time-pill')]\"\n            ]\n\n            showtimes_found = False\n            for selector in showtime_indicators:\n                try:\n                    # Wait for any of the showtime indicator elements to become visible\n                    await page.wait_for_selector(selector, state=\"visible\", timeout=10000)\n                    print(f\"Showtime indicator found: {selector}\")\n                    showtimes_found = True\n                    break # Found an indicator, no need to check others\n                except Exception:\n                    continue # Try the next selector\n\n            if showtimes_found:\n                print(\"Movie details page loaded and showtime indicators are present.\")\n                await page.screenshot(path=\"screenshots/05_showtimes_available.png\")\n                print(\"Screenshot taken: 05_showtimes_available.png\")\n                print(\"Script completed successfully: Showtimes for 'Border 2' in Mumbai should be visible.\")\n            else:\n                raise Exception(\"Could not confirm showtime availability on the movie details page. No expected showtime indicators found.\")\n\n    except Exception as e:\n        print(f\"\\nAn error occurred during automation: {e}\")\n        if 'page' in locals() and page: # Check if page object exists before trying to screenshot\n            try:\n                await page.screenshot(path=\"screenshots/error_final.png\")\n                print(\"Screenshot taken: error_final.png\")\n                print(f\"Last known URL: {page.url}\")\n            except Exception as screenshot_e:\n                print(f\"Failed to take error screenshot: {screenshot_e}\")\n        raise # Re-raise the exception after logging and screenshot\n\n    finally:\n        if browser:\n            await browser.close()\n            print(\"Browser closed.\")\n\nif __name__ == \"__main__\":\n    # Ensure the screenshots directory exists\n    if not os.path.exists(\"screenshots\"):\n        os.makedirs(\"screenshots\")\n    asyncio.run(main())\n",
+      "steps": [
+        {
+          "step_number": 1,
+          "description": "Navigate to the BookMyShow India homepage.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 2,
+          "description": "Handle city selection by attempting to click 'Mumbai' from a pop-up or a city dropdown at the top. If Mumbai is already selected or no prompt appears, proceed.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 3,
+          "description": "Locate the search bar (or search icon to reveal it) and type 'Border 2'.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 4,
+          "description": "From the search results, click on the movie 'Border 2'.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 5,
+          "description": "Verify that the movie details page loads and showtime availability is displayed for 'Border 2' in Mumbai.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        }
+      ],
+      "current_url": "unknown",
+      "page_title": "unknown",
+      "console_logs": [],
+      "network_errors": [],
+      "final_screenshot": null,
+      "error_message": "Script execution failed",
+      "success": false,
+      "start_time": "2026-02-01T03:18:10.553621",
+      "end_time": "2026-02-01T03:19:03.557389"
+    },
+    {
+      "attempt_number": 3,
+      "script_code": "import asyncio\nimport os\nfrom playwright.async_api import async_playwright, Playwright, expect\n\nasync def main():\n    playwright_instance: Playwright | None = None\n    browser = None\n    page = None\n\n    # Create screenshots directory if it doesn't exist\n    if not os.path.exists(\"screenshots\"):\n        os.makedirs(\"screenshots\")\n\n    try:\n        playwright_instance = await async_playwright().start()\n        browser = await playwright_instance.chromium.launch(headless=False, args=['--start-maximized'])\n        page = await browser.new_page()\n        await page.set_viewport_size({\"width\": 1920, \"height\": 1080})\n\n        print(\"Navigating to BookMyShow...\")\n        await page.goto(\"https://in.bookmyshow.com/\")\n        await page.wait_for_load_state('networkidle')\n        await page.screenshot(path=\"screenshots/01_homepage.png\")\n        print(\"Screenshot taken: 01_homepage.png\")\n\n        # --- Step 2: Select Mumbai as the city ---\n        print(\"Attempting to select Mumbai as the city...\")\n        \n        # Selectors for city interaction\n        mumbai_button_locator = page.locator('button:has-text(\"Mumbai\")') # Direct Mumbai button in a popup/list\n        city_search_input_locator = page.locator('input[placeholder=\"Search for your city\"]')\n        city_popup_locator = page.locator('div[data-selector=\"city-popup\"]')\n        header_city_display_locator = page.locator('div[data-name=\"city-selected\"] > span')\n        list_item_mumbai_locator = page.locator('li:has-text(\"Mumbai\")')\n\n        try:\n            # Try to handle a potential initial city selection popup\n            await city_popup_locator.wait_for(state='visible', timeout=7000)\n            print(\"City selection popup detected. Looking for Mumbai.\")\n            await page.screenshot(path=\"screenshots/01_5_city_popup_detected.png\")\n\n            if await mumbai_button_locator.is_visible():\n                await mumbai_button_locator.click()\n                print(\"Clicked 'Mumbai' button directly in popup.\")\n            elif await city_search_input_locator.is_visible():\n                await city_search_input_locator.fill(\"Mumbai\")\n                await page.wait_for_timeout(1000) # Small pause for suggestions to load\n                await page.keyboard.press(\"Enter\") # Select the first suggestion\n                print(\"Typed 'Mumbai' and pressed Enter in city search input.\")\n            elif await list_item_mumbai_locator.is_visible():\n                await list_item_mumbai_locator.click()\n                print(\"Clicked 'Mumbai' from a list item in popup.\")\n            else:\n                raise ValueError(\"Could not find a method to select Mumbai in popup.\")\n\n        except expect.TimeoutError:\n            print(\"No immediate city selection popup detected. Checking header city selection.\")\n            # If no popup, check if city is already selected or needs to be changed via header\n            if await header_city_display_locator.is_visible(timeout=5000):\n                current_city_text = await header_city_display_locator.text_content()\n                print(f\"Current city displayed in header: {current_city_text}\")\n                if \"Mumbai\" not in current_city_text:\n                    await header_city_display_locator.click() # Click to open city selection dialog\n                    print(\"Clicked current city in header to change it.\")\n                    await city_popup_locator.wait_for(state='visible', timeout=5000)\n                    \n                    if await mumbai_button_locator.is_visible():\n                        await mumbai_button_locator.click()\n                        print(\"Clicked 'Mumbai' button after opening city selector from header.\")\n                    elif await city_search_input_locator.is_visible():\n                        await city_search_input_locator.fill(\"Mumbai\")\n                        await page.wait_for_timeout(1000)\n                        await page.keyboard.press(\"Enter\")\n                        print(\"Typed 'Mumbai' and pressed Enter in city search input after opening from header.\")\n                    elif await list_item_mumbai_locator.is_visible():\n                        await list_item_mumbai_locator.click()\n                        print(\"Clicked 'Mumbai' from a list item after opening from header.\")\n                    else:\n                        raise ValueError(\"Could not find a method to select Mumbai after opening city selector from header.\")\n                else:\n                    print(\"Mumbai already seems to be selected or visible as the city in header.\")\n            else:\n                print(\"Could not find a clear city selection mechanism on the page.\")\n                raise ValueError(\"Failed to select Mumbai. No city selection UI found.\")\n        \n        await page.wait_for_load_state('networkidle')\n        await page.screenshot(path=\"screenshots/02_mumbai_selected.png\")\n        print(\"Screenshot taken: 02_mumbai_selected.png (after city selection)\")\n        \n        # --- Handle any persistent popups (e.g., promotional) --- \n        try:\n            close_popup_button = page.locator('.modal-close-button, .close-button, [aria-label=\"Close\"]', has_text='No Thanks').first\n            if await close_popup_button.is_visible(timeout=3000):\n                print(\"Found a generic close popup button, attempting to close.\")\n                await close_popup_button.click()\n                await page.wait_for_load_state('networkidle')\n                await page.screenshot(path=\"screenshots/02_1_after_popup_closed.png\")\n                print(\"Screenshot taken: 02_1_after_popup_closed.png\")\n        except expect.TimeoutError:\n            print(\"No generic popup close button found after city selection.\")\n\n        # --- Step 3: Search for Movie \"Border 2\" ---\n        print(\"Searching for the movie 'Border 2'...\")\n        \n        # Click the search icon/button in the header\n        search_icon = page.locator('div[data-qa-id=\"search-icon\"], [aria-label=\"Search button\"], button.search-button').first\n        await search_icon.wait_for(state='visible', timeout=10000)\n        await search_icon.click()\n        print(\"Clicked search icon.\")\n        \n        # Wait for the search input field to become visible and interactable\n        search_input_field = page.locator('input[placeholder=\"Search for Movies, Events, Plays, Sports and Activities\"]').first\n        await search_input_field.wait_for(state='visible', timeout=10000)\n        await search_input_field.fill(\"Border 2\")\n        print(\"Typed 'Border 2' into the search field.\")\n        \n        # Wait for search results to appear and click on \"Border 2\"\n        # Using a more specific selector for the movie result link\n        movie_result_locator = page.locator('a[href*=\"/border-2/\"] div.sc-kghonf.kFmQcZ:has-text(\"Border 2\"), a[href*=\"/border-2/\"] div:has-text(\"Border 2\")').first\n        await movie_result_locator.wait_for(state='visible', timeout=10000)\n        await page.screenshot(path=\"screenshots/03_movie_search_results.png\")\n        print(\"Screenshot taken: 03_movie_search_results.png\")\n        await movie_result_locator.click()\n        print(\"Clicked on 'Border 2' movie result.\")\n        \n        # --- Step 4: Check for available shows ---\n        print(\"Navigated to movie details page. Checking for show availability...\")\n        # Wait for an element that signifies show information, e.g., \"Book Tickets\" button or show dates\n        book_tickets_button = page.locator('button:has-text(\"Book Tickets\")')\n        show_dates_section = page.locator('div.date-selector-container, div.showtime-filters-container')\n\n        await expect(book_tickets_button.or_(show_dates_section)).to_be_visible(timeout=15000)\n        \n        await page.wait_for_load_state('networkidle')\n        await page.screenshot(path=\"screenshots/04_show_availability.png\")\n        print(\"Screenshot taken: 04_show_availability.png\")\n        \n        print(\"Successfully navigated to Border 2 movie page and found show availability section.\")\n\n    except expect.TimeoutError as e:\n        print(f\"Playwright Timeout Error: {e}\")\n        if page:\n            await page.screenshot(path=\"screenshots/error_timeout.png\")\n            print(\"Screenshot taken: error_timeout.png\")\n        print(\"A timeout occurred. The element might not have appeared in time or the selector is incorrect.\")\n    except ValueError as e:\n        print(f\"Script Logic Error: {e}\")\n        if page:\n            await page.screenshot(path=\"screenshots/error_logic.png\")\n            print(\"Screenshot taken: error_logic.png\")\n    except Exception as e:\n        print(f\"An unexpected error occurred: {e}\")\n        if page:\n            await page.screenshot(path=\"screenshots/error_unexpected.png\")\n            print(\"Screenshot taken: error_unexpected.png\")\n    finally:\n        if browser:\n            await browser.close()\n            print(\"Browser closed.\")\n        if playwright_instance:\n            await playwright_instance.stop()\n            print(\"Playwright instance stopped.\")\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+      "steps": [
+        {
+          "step_number": 1,
+          "description": "Navigate to the BookMyShow homepage.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 2,
+          "description": "Handle the city selection, ensuring 'Mumbai' is selected. This includes detecting and interacting with potential city selection popups or header-based city changers.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 3,
+          "description": "Close any potential generic promotional popups that might appear after city selection.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 4,
+          "description": "Click the search icon and type 'Border 2' into the search field.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 5,
+          "description": "Wait for search results to appear and click on the 'Border 2' movie from the results.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 6,
+          "description": "Navigate to the 'Border 2' movie details page and wait for the show availability section to load.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        }
+      ],
+      "current_url": "unknown",
+      "page_title": "unknown",
+      "console_logs": [],
+      "network_errors": [],
+      "final_screenshot": null,
+      "error_message": "Script execution failed",
+      "success": false,
+      "start_time": "2026-02-01T03:19:05.575797",
+      "end_time": "2026-02-01T03:20:12.803971"
+    }
+  ]
+}

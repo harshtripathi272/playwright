@@ -1,0 +1,70 @@
+{
+  "task_id": "fc288222",
+  "total_attempts": 1,
+  "final_success": true,
+  "attempts": [
+    {
+      "attempt_number": 1,
+      "script_code": "import time\nimport random\nfrom playwright.sync_api import sync_playwright\nfrom playwright_stealth.stealth import Stealth  # CRITICAL: Anti-bot detection\n\ndef random_delay(min_ms=100, max_ms=500):\n    \"\"\"Add random delay to mimic human behavior.\"\"\"\n    time.sleep(random.uniform(min_ms / 1000, max_ms / 1000))\n\ndef human_type(page, text: str):\n    \"\"\"Type like a human with random delays and occasional typos.\"\"\"\n    for i, char in enumerate(text):\n        # 5% chance to make a typo\n        if random.random() < 0.05 and i < len(text) - 1:\n            wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')\n            page.keyboard.type(wrong_char)\n            random_delay(150, 400)\n            page.keyboard.press(\"Backspace\")\n            random_delay(200, 500)\n        \n        page.keyboard.type(char)\n        if char == \" \":\n            random_delay(150, 400)\n        else:\n            random_delay(40, 200)\n\ndef move_mouse_randomly(page):\n    \"\"\"Move mouse to random positions like a human.\"\"\"\n    for _ in range(3):\n        x = random.randint(100, 800)\n        y = random.randint(100, 500)\n        page.mouse.move(x, y)\n        random_delay(100, 300)\n\ndef main():\n    with sync_playwright() as p:\n        # Launch with anti-detection settings\n        browser = p.chromium.launch(\n            headless=False,\n            args=[\n                '--disable-blink-features=AutomationControlled',\n                '--no-sandbox',\n                '--disable-dev-shm-usage',\n                '--disable-infobars',\n                '--disable-extensions',\n                '--disable-gpu',\n                '--window-size=1920,1080',\n            ]\n        )\n        \n        # Create context with realistic settings (Indian locale for BookMyShow)\n        context = browser.new_context(\n            viewport={\"width\": 1920, \"height\": 1080},\n            user_agent=\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\",\n            locale=\"en-IN\",\n            timezone_id=\"Asia/Kolkata\",\n            geolocation={\"latitude\": 19.0760, \"longitude\": 72.8777},  # Mumbai\n            permissions=[\"geolocation\"],\n            extra_http_headers={\n                \"Accept-Language\": \"en-IN,en;q=0.9\",\n                \"Accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\",\n                \"Sec-Fetch-Dest\": \"document\",\n                \"Sec-Fetch-Mode\": \"navigate\",\n                \"Sec-Fetch-Site\": \"none\",\n                \"Sec-Fetch-User\": \"?1\",\n            }\n        )\n        \n        page = context.new_page()\n        \n        # CRITICAL: Apply stealth mode to hide automation signatures\n        stealth = Stealth()\n        stealth.apply_stealth_sync(page)\n        print(\"Stealth mode activated!\")\n        \n        try:\n            print(\"Step 1: Navigate to BookMyShow homepage.\")\n            random_delay(500, 1000)\n            page.goto(\"https://in.bookmyshow.com/\", wait_until=\"domcontentloaded\", timeout=60000)\n            random_delay(2000, 3000)\n            move_mouse_randomly(page)\n            page.screenshot(path=\"bms_step1_homepage.png\")\n            print(\"Screenshot saved: bms_step1_homepage.png\")\n            \n            print(\"Step 2: Handling city selection (Mumbai).\")\n            # Attempt to click 'Mumbai' city button/link\n            try:\n                # Look for a common city selection pattern (e.g., text, data-test-id)\n                city_selectors = [\n                    page.locator(\"text=Mumbai\").first,\n                    page.locator(\"div[data-test-id='city-modal-overlay'] button:has-text('Mumbai')\").first,\n                    page.locator(\"li[data-value='Mumbai']\").first\n                ]\n                \n                clicked_city = False\n                for selector in city_selectors:\n                    if selector.is_visible(timeout=5000):\n                        selector.hover()\n                        random_delay(300, 800)\n                        selector.click()\n                        print(\"City selected: Mumbai\")\n                        clicked_city = True\n                        random_delay(3000, 4000) # Wait for page to settle after city selection\n                        break\n                \n                if not clicked_city:\n                    print(\"Mumbai city selection not found or already selected.\")\n\n            except Exception as e:\n                print(f\"City selection skipped or failed: {e}\")\n                \n            page.screenshot(path=\"bms_step2_city_selected.png\")\n            print(\"Screenshot saved: bms_step2_city_selected.png\")\n\n            print(\"Step 3: Locate and click the search icon/button.\")\n            # BookMyShow usually has a magnifying glass icon for search\n            search_icon_selectors = [\n                \"a[href='/explore/search/movies']\", # Common search link\n                \"div[class*='search-button']\", # Search button div\n                \"svg[data-icon='search']\" # SVG search icon\n            ]\n\n            search_button = None\n            for selector_str in search_icon_selectors:\n                try:\n                    loc = page.locator(selector_str).first\n                    if loc.is_visible(timeout=5000):\n                        search_button = loc\n                        break\n                except:\n                    continue\n            \n            if search_button:\n                search_button.hover()\n                random_delay(300, 700)\n                search_button.click()\n                print(\"Clicked search icon.\")\n                random_delay(2000, 3000)\n            else:\n                print(\"Search icon not found. Proceeding without clicking.\")\n            \n            page.screenshot(path=\"bms_step3_search_clicked.png\")\n            print(\"Screenshot saved: bms_step3_search_clicked.png\")\n\n            print(\"Step 4: Type 'Border 2' into the search input.\")\n            search_input = None\n            # Try multiple selectors for the actual search input field\n            search_input_selectors = [\n                \"input[placeholder*='Search']\",\n                \"input#inp_Search\",\n                \"input[type='text'][class*='search-input']\"\n            ]\n\n            for selector in search_input_selectors:\n                try:\n                    loc = page.locator(selector).first\n                    if loc.is_visible(timeout=5000):\n                        search_input = loc\n                        break\n                except:\n                    continue\n            \n            if search_input:\n                search_input.hover()\n                random_delay(200, 400)\n                search_input.click()\n                random_delay(300, 600)\n                search_input.fill(\"\")  # Clear first\n                random_delay(200, 400)\n                human_type(page, \"Border 2\")\n                print(\"Typed 'Border 2' into search.\")\n                random_delay(3000, 4000)  # Wait for dropdown suggestions\n            else:\n                raise Exception(\"Search input field not found.\")\n            \n            page.screenshot(path=\"bms_step4_typed_search.png\")\n            print(\"Screenshot saved: bms_step4_typed_search.png\")\n\n            print(\"Step 5: Select 'Border 2' from the search results/suggestions.\")\n            # Look for suggestions in a common structure\n            # BookMyShow often uses a specific structure for search results like a list or div containing a-tags\n            movie_result_selectors = [\n                \"a[href*='border-2']\", # Direct link if available\n                \"div[class*='sc-g'] > div:has-text('Border 2')\", # Common structure for movie results\n                \"li:has-text('Border 2')\",\n                \"div[role='option']:has-text('Border 2')\"\n            ]\n            \n            movie_found = False\n            for selector_str in movie_result_selectors:\n                try:\n                    movie_link = page.locator(selector_str).first\n                    if movie_link.is_visible(timeout=5000):\n                        movie_link.scroll_into_view_if_needed()\n                        movie_link.hover(timeout=2000)\n                        random_delay(300, 800)\n                        movie_link.click(force=True)\n                        print(f\"Clicked search result for: {movie_link.inner_text()}\")\n                        movie_found = True\n                        random_delay(4000, 6000) # Wait for movie page to load\n                        break\n                except Exception as e:\n                    print(f\"Trying next movie result selector: {e}\")\n                    continue\n            \n            if not movie_found:\n                raise Exception(\"Movie 'Border 2' not found in search results.\")\n            \n            page.screenshot(path=\"bms_step5_movie_page.png\")\n            print(\"Screenshot saved: bms_step5_movie_page.png\")\n\n            print(\"Step 6: Verify if showtimes are displayed for 'Border 2'.\")\n            # Check for elements indicating showtimes or ability to book tickets\n            try:\n                book_tickets_button = page.locator(\"text=Book Tickets\").first\n                show_date_picker = page.locator(\"div[data-entity-type='Date']\").first\n                \n                if book_tickets_button.is_visible(timeout=10000):\n                    print(\" 'Book Tickets' button is visible. Shows are likely available.\")\n                elif show_date_picker.is_visible(timeout=10000):\n                    print(\" Date picker for shows is visible. Shows are likely available.\")\n                else:\n                    print(\" No immediate 'Book Tickets' or date picker visible. Shows might not be available or page structure changed.\")\n                \n            except Exception as e:\n                print(f\"Could not verify showtime availability: {e}\")\n                print(\"This could mean no shows are currently available or selectors need adjustment.\")\n\n            page.screenshot(path=\"bms_step6_showtime_check.png\")\n            print(\"Screenshot saved: bms_step6_showtime_check.png\")\n\n            print(\"Automation completed successfully!\")\n            \n        except Exception as e:\n            print(f\"Error: {e}\")\n            page.screenshot(path=\"bms_error.png\")\n            print(\"Screenshot saved: bms_error.png\")\n        finally:\n            random_delay(1000, 2000)\n            browser.close()\n            print(\"Browser closed.\")\n\nif __name__ == \"__main__\":\n    main()",
+      "steps": [
+        {
+          "step_number": 1,
+          "description": "Step 1: Navigate to BookMyShow homepage.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 2,
+          "description": "Step 2: Handle city selection, specifically clicking on 'Mumbai'.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 3,
+          "description": "Step 3: Locate and click the search icon/button.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 4,
+          "description": "Step 4: Type 'Border 2' into the search input using human-like typing.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 5,
+          "description": "Step 5: Select 'Border 2' from the search results/suggestions.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 6,
+          "description": "Step 6: Verify if showtimes are displayed for 'Border 2' on its dedicated page.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        }
+      ],
+      "current_url": null,
+      "page_title": null,
+      "console_logs": [],
+      "network_errors": [],
+      "final_screenshot": null,
+      "error_message": null,
+      "success": true,
+      "start_time": "2026-02-01T03:37:59.627527",
+      "end_time": "2026-02-01T03:38:29.790737"
+    }
+  ]
+}

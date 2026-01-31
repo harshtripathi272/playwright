@@ -1,0 +1,70 @@
+{
+  "task_id": "28ac5162",
+  "total_attempts": 1,
+  "final_success": true,
+  "attempts": [
+    {
+      "attempt_number": 1,
+      "script_code": "import time\nimport random\nfrom playwright.sync_api import sync_playwright\nfrom playwright_stealth.stealth import Stealth  # CRITICAL: Anti-bot detection\n\ndef random_delay(min_ms=100, max_ms=500):\n    \"\"\"Add random delay to mimic human behavior.\"\"\"\n    time.sleep(random.uniform(min_ms / 1000, max_ms / 1000))\n\ndef human_type(page, text: str):\n    \"\"\"Type like a human with random delays and occasional typos.\"\"\"\n    for i, char in enumerate(text):\n        # 5% chance to make a typo\n        if random.random() < 0.05 and i < len(text) - 1:\n            wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')\n            page.keyboard.type(wrong_char)\n            random_delay(150, 400)\n            page.keyboard.press(\"Backspace\")\n            random_delay(200, 500)\n        \n        page.keyboard.type(char)\n        if char == \" \":\n            random_delay(150, 400)\n        else:\n            random_delay(40, 200)\n\ndef move_mouse_randomly(page):\n    \"\"\"Move mouse to random positions like a human.\"\"\"\n    for _ in range(3):\n        x = random.randint(100, 800)\n        y = random.randint(100, 500)\n        page.mouse.move(x, y)\n        random_delay(100, 300)\n\ndef main():\n    with sync_playwright() as p:\n        # Launch with anti-detection settings\n        browser = p.chromium.launch(\n            headless=False,\n            args=[\n                '--disable-blink-features=AutomationControlled',\n                '--no-sandbox',\n                '--disable-dev-shm-usage',\n                '--disable-infobars',\n                '--disable-extensions',\n                '--disable-gpu',\n                '--window-size=1920,1080',\n            ]\n        )\n        \n        # Create context with realistic settings\n        context = browser.new_context(\n            viewport={\"width\": 1920, \"height\": 1080},\n            user_agent=\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\",\n            locale=\"en-US\", # Google is global, US is a good default\n            timezone_id=\"America/New_York\",\n            geolocation={\"latitude\": 40.7128, \"longitude\": -74.0060},  # New York City\n            permissions=[\"geolocation\"],\n            extra_http_headers={\n                \"Accept-Language\": \"en-US,en;q=0.9\",\n                \"Accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\",\n                \"Sec-Fetch-Dest\": \"document\",\n                \"Sec-Fetch-Mode\": \"navigate\",\n                \"Sec-Fetch-Site\": \"none\",\n                \"Sec-Fetch-User\": \"?1\",\n            }\n        )\n        \n        page = context.new_page()\n        \n        # CRITICAL: Apply stealth mode to hide automation signatures\n        stealth = Stealth()\n        stealth.apply_stealth_sync(page)\n        print(\"Stealth mode activated!\")\n        \n        try:\n            # Step 1: Navigate to Google.com\n            print(\"Step 1: Navigating to google.com...\")\n            random_delay(500, 1000)\n            page.goto(\"https://www.google.com\", wait_until=\"domcontentloaded\", timeout=60000)\n            random_delay(2000, 3000)\n            move_mouse_randomly(page)\n            page.screenshot(path=\"step1_google_homepage.png\")\n            print(\"Screenshot saved: step1_google_homepage.png\")\n            \n            # Step 2: Find the search input field\n            print(\"Step 2: Finding search input field...\")\n            search_input = None\n            search_selectors = [\n                \"textarea[name='q']\", # Google's primary search input\n                \"input[name='q']\",\n                \"input[placeholder*='Search']\",\n                \"input[type='search']\",\n                \"input[type='text']\",\n            ]\n\n            for selector in search_selectors:\n                try:\n                    loc = page.locator(selector).first\n                    if loc.is_visible(timeout=2000):\n                        search_input = loc\n                        print(f\"Found search input with selector: {selector}\")\n                        break\n                except:\n                    continue\n\n            if not search_input:\n                # Google usually has a textarea or input directly visible. This fallback is more generic.\n                try:\n                    # Attempt to click on a general search icon/text if present (less common on Google homepage)\n                    page.locator(\"text=Search\").first.click(timeout=2000)\n                    random_delay(500, 1000)\n                    search_input = page.locator(\"input:visible, textarea:visible\").first\n                    print(\"Found search input via fallback click.\")\n                except Exception as e:\n                    print(f\"Could not find search input even with fallback: {e}\")\n                    raise Exception(\"Failed to find search input field.\")\n\n            # Step 3: Type \"weather\" into the search field\n            print(\"Step 3: Typing 'weather' into search field...\")\n            search_input.hover()\n            random_delay(200, 400)\n            search_input.click()\n            random_delay(300, 600)\n            \n            # Google's search input often clears itself on click if it's pre-filled\n            # For a fresh search, clearing explicitly might be redundant but safe.\n            # search_input.fill(\"\") \n            # random_delay(200, 400)\n            \n            human_type(page, \"weather\")\n            random_delay(500, 1000) # Short delay before pressing Enter\n\n            # Step 4: Submit the search query\n            print(\"Step 4: Submitting search query by pressing Enter...\")\n            page.keyboard.press(\"Enter\")\n            \n            # Step 5: Wait for search results to load, specifically for the weather card\n            print(\"Step 5: Waiting for weather results to appear...\")\n            # Wait for either the temperature element or the main weather card container\n            page.wait_for_selector(\"#wob_tm, div[aria-label='Weather']\", timeout=15000)\n            random_delay(3000, 5000) # Give it a bit more time after selector appears\n            move_mouse_randomly(page)\n\n            # Step 6: Take a screenshot of the weather results\n            page.screenshot(path=\"step6_weather_results.png\")\n            print(\"Screenshot saved: step6_weather_results.png\")\n            \n            print(\"Automation completed successfully: Searched for 'weather' on Google and found results.\")\n            \n        except Exception as e:\n            print(f\"Error during automation: {e}\")\n            page.screenshot(path=\"error.png\")\n            print(\"Screenshot saved: error.1.png\")\n        finally:\n            random_delay(1000, 2000)\n            browser.close()\n            print(\"Browser closed.\")\n\nif __name__ == \"__main__\":\n    main()",
+      "steps": [
+        {
+          "step_number": 1,
+          "description": "Step 1: Navigate to google.com.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 2,
+          "description": "Step 2: Locate the search input field on the Google homepage.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 3,
+          "description": "Step 3: Type 'weather' into the search input field using human-like typing.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 4,
+          "description": "Step 4: Submit the search query by pressing Enter.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 5,
+          "description": "Step 5: Wait for the weather search results (e.g., the weather card) to appear on the page.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        },
+        {
+          "step_number": 6,
+          "description": "Step 6: Take a screenshot of the search results page.",
+          "status": "pending",
+          "error": null,
+          "screenshot_path": null,
+          "timestamp": null
+        }
+      ],
+      "current_url": null,
+      "page_title": null,
+      "console_logs": [],
+      "network_errors": [],
+      "final_screenshot": null,
+      "error_message": null,
+      "success": true,
+      "start_time": "2026-02-01T03:45:41.032248",
+      "end_time": "2026-02-01T03:46:15.167090"
+    }
+  ]
+}

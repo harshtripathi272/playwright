@@ -1,0 +1,6 @@
+# AI Script Generator Dependencies
+playwright>=1.40.0
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+pillow>=10.0.0
+opencv-python>=4.8.0
