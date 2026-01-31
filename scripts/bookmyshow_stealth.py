@@ -47,7 +47,7 @@ def human_type(page, text: str):
     - Occasional typos and backspaces (5% chance)
     """
     chars = list(text)
-    
+
     for i, char in enumerate(chars):
         # 5% chance to make a typo (if not the last character)
         if random.random() < 0.05 and i < len(chars) - 1:
@@ -154,7 +154,6 @@ def find_best_dropdown_match(page, search_text: str):
     else:
         console.print(f"[yellow]⚠ Best match \"{best_match['text']}\" score too low ({best_match['score']})[/yellow]")
         return None
-
 
 def extract_buttons_and_links(page):
     """Extract all buttons and clickable elements from the page."""
@@ -419,10 +418,7 @@ def run_stealth_script(movie_name: str, city_name: str, find_text: str = None, a
                     
                     # Try to interact with the found element
                     selector = best_elem.get("selector")
-                    # We need to find the specific element handle again or use the selector
-                    # However, best_elem from fallback_fuzzy_match might not have the playwright locator handle attached
-                    # But extract_buttons_and_links returns dictionaries, not handles.
-                    # We need to re-locate it.
+                    
                     
                     target_locator = None
                     if selector:
