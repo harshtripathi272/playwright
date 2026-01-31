@@ -452,13 +452,13 @@ def run_stealth_script(movie_name: str, city_name: str, find_text: str = None, a
                                      page.goto(target_url, wait_until="domcontentloaded")
                                      console.print(f"[green]✓ Navigated directly to {target_url}[/green]")
                                  else:
-                                     console.print("[red]❌ No href found for fallback navigation[/red]")
+                                     console.print("[red] No href found for fallback navigation[/red]")
                              except:
-                                 console.print("[red]❌ Failed to retrieve href[/red]")
+                                 console.print("[red] Failed to retrieve href[/red]")
                         
                         random_delay(5000, 6000)
                     else:
-                        console.print("[red]❌ Could not re-locate the element on page[/red]")
+                        console.print("[red] Could not re-locate the element on page[/red]")
 
             return elements
             
